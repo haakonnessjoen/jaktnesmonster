@@ -53,6 +53,12 @@ class CPU {
             .opname = "UNKNOWN";
             .opcode = .system.read_byte(address: .pc)
 
+            // If anyone else than me sees this, please don't arrest me.
+            // It was mostly written by Github Copilot, so it has probably
+            // duplicated a bit of if statements, etc.
+            // I just want to test that the individual instructions works as
+            // expected. Would need to clean up later.
+
             if (.opcode == 0x4c or .opcode == 0x6c) {
                 .jmp(opcode: .opcode)
                 .opname = "JMP"
