@@ -20,8 +20,20 @@ function main(args: [String]) {
 
     match system {
         Success(system) => {
+            mut ticks = 0
             mut cpu = CPU::init(system)
             cpu.debug()
+
+            mut i = 0
+            mut lastpc: u16 = 0
+            while (i < 5000) {
+                //print("-- TICK: {:2d}\n", ticks++)
+                cpu.tick()
+                i++
+            }
+            print("RAM: {:2>02x} {:2>02x} {:2>02x} {:2>02x} {:2>02x} {:2>02x} {:2>02x} {:2>02x}\n",
+                system.read_byte(address: 0x0000), system.read_byte(address: 0x0001), system.read_byte(address: 0x0002), system.read_byte(address: 0x0003),
+                system.read_byte(address: 0x0004), system.read_byte(address: 0x0005), system.read_byte(address: 0x0006), system.read_byte(address: 0x0007))
         }
         Error(msg) => {
             eprintln("Error: {}", msg)

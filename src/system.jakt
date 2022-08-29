@@ -25,6 +25,13 @@ class System {
     }
 
     function mapper_read_byte(this, address: u16) -> u8 {
+        if (address >= 0x8000) {
+            //print("MAP read addr: {:4>04x}\n", address)
+            let page = (address - 0x8000) / 0x4000;
+            //print("Page: {:2>02x} offset: {:4>04x} = {:2>02x}\n", page, address % 0x4000, .cart.prg_rom_pages[page-1][address % 0x4000])
+            return .cart.prg_rom_pages[page-1][address % 0x4000];
+        }
+
         return 0
     }
 
@@ -33,6 +40,7 @@ class System {
 
     public function read_byte(this, address: u16) -> u8 {
         if address < 0x2000 {
+            print("#RAM: Read {:2>02x} from {:4>04x}\n", .scratch_ram[address & 0x7ff], address)
             return .scratch_ram[address & 0x7ff]
         } else if address < 0x4000 {
             return .ppu.read_ppu_addr(address)
@@ -57,6 +65,7 @@ class System {
     public function write_byte(mut this, address: u16, value: u8) {
         if address < 0x2000 {
             .scratch_ram[address & 0x7ff] = value
+            print("#RAM: Write {:2>02x} to {:4>04x}\n", value, address)
         } else if address < 0x4000 {
             .ppu.write_ppu_addr(address, value)
         } else if address < 0x4020 {

@@ -16,9 +16,11 @@ class CPU {
     negative: bool
     system: System
     clock: u64
+    opcode: u8
+    opname: String
 
     public function init(system: System) throws -> CPU {
-        let reset_vector = system.read_word(address: 0xfffc)
+        let reset_vector = 0xc000u16//system.read_word(address: 0xfffc)
 
         return CPU (
             a: 0
@@ -35,7 +37,294 @@ class CPU {
             negative: false
             system
             clock: 0
+            opcode: 0x80
+            opname: ""
         )
+    }
+
+    public function tick(mut this) throws {
+        if (.clock > 0) {
+            .clock -= 1
+            return
+        }
+
+        if (.clock == 0) {
+            let old_pc = .pc
+            .opname = "UNKNOWN";
+            .opcode = .system.read_byte(address: .pc)
+
+            if (.opcode == 0x4c or .opcode == 0x6c) {
+                .jmp(opcode: .opcode)
+                .opname = "JMP"
+            }
+            else if (.opcode == 0x78) {
+                .sei()
+                .opname = "SEI"
+            }
+            else if (.opcode == 0xf8) {
+                .sed()
+                .opname = "SED"
+            }
+            else if (.opcode == 0xd8) {
+                .cld()
+                .opname = "CLD"
+            }
+            else if (.opcode == 0x08) {
+                .php()
+                .opname = "PHP"
+            }
+            else if (.opcode == 0x68) {
+                .pla()
+                .opname = "PLA"
+            }
+            else if (.opcode == 0x48) {
+                .pha()
+                .opname = "PHA"
+            }
+            else if (.opcode == 0x28) {
+                .plp()
+                .opname = "PLP"
+            }
+            else if (.opcode == 0xa2 or .opcode == 0xa6 or .opcode == 0xb6 or .opcode == 0xbe or .opcode == 0xae) {
+                .ldx(opcode: .opcode)
+                .opname = "LDX"
+            }
+            else if (.opcode == 0xa0 or .opcode == 0xa4 or .opcode == 0xb4 or .opcode == 0xac or .opcode == 0xbc) {
+                .ldy(opcode: .opcode)
+                .opname = "LDY"
+            }
+            else if (.opcode == 0x9a) {
+                .txs()
+                .opname = "TXS"
+            }
+            else if (.opcode == 0xa9 or .opcode == 0xa5 or .opcode == 0xb5 or .opcode == 0xa1 or .opcode == 0xb1 or .opcode == 0xad or .opcode == 0xbd or .opcode == 0xb9) {
+                .lda(opcode: .opcode)
+                .opname = "LDA"
+            }
+            else if (.opcode == 0x10) {
+                .bpl()
+                .opname = "BPL"
+            }
+            else if (.opcode == 0x86 or .opcode == 0x96 or .opcode == 0x8e) {
+                .stx(opcode: .opcode)
+                .opname = "STX"
+            }
+            else if (.opcode == 0x20) {
+                .jsr()
+                .opname = "JSR"
+            }
+            else if (.opcode == 0x60) {
+                .rts()
+                .opname = "RTS"
+            }
+            else if (.opcode == 0x85 or .opcode == 0x95 or .opcode == 0x81 or .opcode == 0x91 or .opcode == 0x8d or .opcode == 0x9d or .opcode == 0x99) {
+                .sta(opcode: .opcode)
+                .opname = "STA"
+            }
+            else if (.opcode == 0x00) {
+                .brk()
+                .opname = "BRK"
+            }
+            else if (.opcode == 0x40) {
+                .rti()
+                .opname = "RTI"
+            }
+            else if (.opcode == 0x8e) {
+                .stx(opcode: .opcode)
+                .opname = "STX"
+            }
+            else if (.opcode == 0x84 or .opcode == 0x94 or .opcode == 0x8c) {
+                .sty(opcode: .opcode)
+                .opname = "STY"
+            }
+            else if (.opcode == 0xaa) {
+                .tax()
+                .opname = "TAX"
+            }
+            else if (.opcode == 0x8a) {
+                .txa()
+                .opname = "TXA"
+            }
+            else if (.opcode == 0x98) {
+                .tya()
+                .opname = "TYA"
+            }
+            else if (.opcode == 0xa8) {
+                .tay()
+                .opname = "TAY"
+            }
+            else if (.opcode == 0xba) {
+                .tsx()
+                .opname = "TSX"
+            }
+            else if (.opcode == 0x9a) {
+                .txs()
+                .opname = "TXS"
+            }
+            else if (.opcode == 0x85) {
+                .sta(opcode: .opcode)
+                .opname = "STA"
+            }
+            else if (.opcode == 0x24 or .opcode == 0x2c) {
+                .bit(opcode: .opcode)
+                .opname = "BIT"
+            }
+            else if (.opcode == 0x30) {
+                .bmi()
+                .opname = "BMI"
+            }
+            else if (.opcode == 0x90) {
+                .bcc()
+                .opname = "BCC"
+            }
+            else if (.opcode == 0xb0) {
+                .bcs()
+                .opname = "BCS"
+            }
+            else if (.opcode == 0xf0) {
+                .beq()
+                .opname = "BEQ"
+            }
+            else if (.opcode == 0xd0) {
+                .bne()
+                .opname = "BNE"
+            }
+            else if (.opcode == 0x50) {
+                .bvc()
+                .opname = "BVC"
+            }
+            else if (.opcode == 0x70) {
+                .bvs()
+                .opname = "BVS"
+            }
+            else if (.opcode == 0x18) {
+                .clc()
+                .opname = "CLC"
+            }
+            else if (.opcode == 0x58) {
+                .cli()
+                .opname = "CLI"
+            }
+            else if (.opcode == 0xb8) {
+                .clv()
+                .opname = "CLV"
+            }
+            else if (.opcode == 0xe0 or .opcode == 0xe4 or .opcode == 0xec) {
+                .cpx(opcode: .opcode)
+                .opname = "CPX"
+            }
+            else if (.opcode == 0xc0 or .opcode == 0xc4 or .opcode == 0xcc) {
+                .cpy(opcode: .opcode)
+                .opname = "CPY"
+            }
+            else if (.opcode == 0xc6 or .opcode == 0xd6 or .opcode == 0xce or .opcode == 0xde) {
+                .dec(opcode: .opcode)
+                .opname = "DEC"
+            }
+            else if (.opcode == 0xca) {
+                .dex()
+                .opname = "DEX"
+            }
+            else if (.opcode == 0x88) {
+                .dey()
+                .opname = "DEY"
+            }
+            else if (.opcode == 0xe6 or .opcode == 0xf6 or .opcode == 0xee or .opcode == 0xfe) {
+                .inc(opcode: .opcode)
+                .opname = "INC"
+            }
+            else if (.opcode == 0xe8) {
+                .inx()
+                .opname = "INX"
+            }
+            else if (.opcode == 0xc8) {
+                .iny()
+                .opname = "INY"
+            }
+            else if (.opcode == 0x0a or .opcode == 0x06 or .opcode == 0x16 or .opcode == 0x0e or .opcode == 0x1e) {
+                .asl(opcode: .opcode)
+                .opname = "ASL"
+            }
+            else if (.opcode == 0x2a or .opcode == 0x26 or .opcode == 0x36 or .opcode == 0x2e or .opcode == 0x3e) {
+                .rol(opcode: .opcode)
+                .opname = "ROL"
+            }
+            else if (.opcode == 0x4a or .opcode == 0x46 or .opcode == 0x56 or .opcode == 0x4e or .opcode == 0x5e) {
+                .lsr(opcode: .opcode)
+                .opname = "LSR"
+            }
+            else if (.opcode == 0x6a or .opcode == 0x66 or .opcode == 0x76 or .opcode == 0x6e or .opcode == 0x7e) {
+                .ror(opcode: .opcode)
+                .opname = "ROR"
+            }
+            else if (.opcode == 0xea) {
+                .nop()
+                .opname = "NOP"
+            }
+            else if (.opcode == 0x9d) {
+                .sta(opcode: .opcode)
+                .opname = "STA"
+            }
+            else if (.opcode == 0xaa) {
+                .tax()
+                .opname = "TAX"
+            }
+            else if (.opcode == 0x8a) {
+                .txa()
+                .opname = "TXA"
+            }
+            else if (.opcode == 0x9a) {
+                .txs()
+                .opname = "TXS"
+            }
+            else if (.opcode == 0x98) {
+                .tya()
+                .opname = "TYA"
+            }
+            else if (.opcode == 0x9a) {
+                .txs()
+                .opname = "TXS"
+            }
+            else if (.opcode == 0x8d) {
+                .sta(opcode: .opcode)
+                .opname = "STA"
+            }
+            else if (.opcode == 0x38) {
+                .sec()
+                .opname = "SEC"
+            }
+            else if (.opcode == 0x09 or .opcode == 0x05 or .opcode == 0x15 or .opcode == 0x01 or .opcode == 0x11 or .opcode == 0x0d or .opcode == 0x1d or .opcode == 0x19) {
+                .ora(opcode: .opcode)
+                .opname = "ORA"
+            }
+            else if (.opcode == 0x29 or .opcode == 0x25 or .opcode == 0x35 or .opcode == 0x21 or .opcode == 0x31 or .opcode == 0x2d or .opcode == 0x3d or .opcode == 0x39) {
+                .and_opcode(opcode: .opcode)
+                .opname = "AND"
+            }
+            else if (.opcode == 0x49 or .opcode == 0x45 or .opcode == 0x55 or .opcode == 0x41 or .opcode == 0x51 or .opcode == 0x4d or .opcode == 0x5d or .opcode == 0x59) {
+                .eor(opcode: .opcode)
+                .opname = "EOR"
+            }
+            else if (.opcode == 0x69 or .opcode == 0x65 or .opcode == 0x75 or .opcode == 0x61 or .opcode == 0x71 or .opcode == 0x6d or .opcode == 0x7d or .opcode == 0x79) {
+                .adc(opcode: .opcode)
+                .opname = "ADC"
+            }
+            else if (.opcode == 0xe9 or .opcode == 0xe5 or .opcode == 0xf5 or .opcode == 0xe1 or .opcode == 0xf1 or .opcode == 0xed or .opcode == 0xfd or .opcode == 0xf9) {
+                .sbc(opcode: .opcode)
+                .opname = "SBC"
+            }
+            else if (.opcode == 0xc9 or .opcode == 0xc5 or .opcode == 0xd5 or .opcode == 0xc1 or .opcode == 0xd1 or .opcode == 0xcd or .opcode == 0xdd or .opcode == 0xd9) {
+                .cmp(opcode: .opcode)
+                .opname = "CMP"
+            }
+            else if (.opcode == 0x47 or .opcode == 0x57 or .opcode == 0x43 or .opcode == 0x53 or .opcode == 0x4f or .opcode == 0x5f or .opcode == 0x5b) {
+                .sre(opcode: .opcode)
+                .opname = "SRE"
+            }
+
+            print("{:4>04x}  {:0>2x} {}\n", old_pc, .opcode, .opname)
+            .debug()
+        }
     }
 
     public function debug(this) {
@@ -75,6 +364,7 @@ class CPU {
         } else {
             print("-")
         }
+        print("\n")
     }
 
     // Addressing modes
@@ -355,7 +645,7 @@ class CPU {
             else => 0i16
         }
 
-        let intermediate = match opcode {
+        let intermediate: i16 = match opcode {
             0x69u8 => {
                 let tmp = .a as! i16 + .immediate() as! i16 + carry_value
                 .clock += 2
@@ -415,10 +705,17 @@ class CPU {
                 yield 0i16
             }
         }
+
         // TODO: decimal mode
-        .overflow = intermediate < -128i16 or intermediate > 127i16
-        .carry = (intermediate as! u16 & 0xff00) != 0
+        .overflow = intermediate > 127i16 or intermediate < -127i16
+        .carry = intermediate > 0xff
         .test_nz_flags(value: .a)
+
+        if intermediate < 0 { // heh, trying to figure out jakt :P
+            .a = (intermediate + 256i16) as! u8
+        } else {
+            .a = intermediate as! u8
+        }
     }
 
     function sbc(mut this, opcode: u8) {
@@ -427,7 +724,7 @@ class CPU {
             else => 1i16
         }
 
-        let intermediate = match opcode {
+        let intermediate: i16 = match opcode {
             0xe9u8 => {
                 let tmp = .a as! i16 - .immediate() as! i16 - carry_value
                 .clock += 2
@@ -491,7 +788,7 @@ class CPU {
         }
         // TODO: double check the logic here
         .overflow = intermediate < -128i16 or intermediate > 127i16
-        .carry = (intermediate as! u16 & 0xff00) != 0
+        .carry = intermediate < 0
         .test_nz_flags(value: .a)
     }
 
@@ -897,6 +1194,86 @@ class CPU {
         }
     }
 
+    function sre(mut this, opcode: u8) {
+        match opcode {
+            0x47u8 => {
+                mut tmp = .zero_page() >> 1
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .zero_page()
+                .test_nz_flags(value: tmp)
+                .zero_page_set(value: tmp)
+                .pc += 2
+                .clock += 5
+            }
+            0x57u8 => {
+                mut tmp = .zero_page_x()
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .zero_page_x()
+                .test_nz_flags(value: tmp)
+                .zero_page_x_set(value: tmp)
+                .pc += 2
+                .clock += 6
+            }
+            0x43u8 => {
+                mut tmp = .indirect_zero_page_x()
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .indirect_zero_page_x()
+                .test_nz_flags(value: tmp)
+                .pc += 2
+                .clock += 8
+            }
+            0x53u8 => {
+                mut tmp = .indirect_zero_page_y(check_extra_clock: false)
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .indirect_zero_page_y(check_extra_clock: false)
+                .test_nz_flags(value: tmp)
+                .pc += 2
+                .clock += 8
+            }
+            0x4fu8 => {
+                mut tmp = .absolute()
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .absolute()
+                .test_nz_flags(value: tmp)
+                .pc += 3
+                .clock += 6
+            }
+            0x5fu8 => {
+                mut tmp = .absolute_x(check_extra_clock: false)
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .absolute_x(check_extra_clock: false)
+                .test_nz_flags(value: tmp)
+                .pc += 2
+                .clock += 6
+            }
+            0x5bu8 => {
+                mut tmp = .absolute_y(check_extra_clock: false)
+                .carry = (tmp & 0x01) == 0x01
+                tmp = tmp >> 1
+                .a = tmp & 0x00ffu16
+                .a = .a ^ .absolute_y(check_extra_clock: false)
+                .test_nz_flags(value: tmp)
+                .pc += 2
+                .clock += 7
+            }
+            else => {
+                eprintln("unknown opcode")
+            }
+        }
+    }
+
     function ror(mut this, opcode: u8) {
         let carry_value = match .carry {
             true => 0x80u8
@@ -952,6 +1329,7 @@ class CPU {
             }
         }
     }
+
 
     public function lda(mut this, opcode: u8) {
         let intermediate: u8 = match opcode {
@@ -1420,7 +1798,6 @@ class CPU {
     function branch(mut this) {
         let arg_address = .pc + 1
         let operand: i8 = .system.read_byte(address: arg_address) as! i8
-        
         // The 6502 would have the PC on the next opcode now and everything is
         // based upon that. Lets emulate that which also makes the code look cleaner
         .pc += 2
@@ -1525,7 +1902,7 @@ class CPU {
     }
 
     function brk(mut this) {
-        .push_word(value: .pc)
+        .push_word(value: .pc + 1)
 
         .clock += 7
 
@@ -1542,7 +1919,7 @@ class CPU {
     }
 
     function jsr(mut this) {
-        .push_word(value: .pc + 2)
+        .push_word(value: .pc + 3)
 
         .clock += 6
 
