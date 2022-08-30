@@ -43,12 +43,12 @@ class CPU {
     }
 
     public function tick(mut this) throws {
-        if (.clock > 0) {
+        if .clock > 0 {
             .clock -= 1
             return
         }
 
-        if (.clock == 0) {
+        if .clock == 0 {
             let old_pc = .pc
             .opname = "UNKNOWN";
             .opcode = .system.read_byte(address: .pc)
@@ -590,7 +590,7 @@ class CPU {
                 .pc += 3
             }
             else => {
-                eprintln("unknown opcode")
+                print("unknown opcode\n")
             }
         }
         .test_nz_flags(value: .a)
@@ -639,13 +639,13 @@ class CPU {
                 .pc += 3
             }
             else => {
-                eprintln("unknown opcode")
+                print("unknown opcode")
             }
         }
         .test_nz_flags(value: .a)
     }
 
-    function adder(mut this, operand: u8, carry: bool) -> u8 {
+    function adder(mut this, operand: u8, carry: bool, update_overflow: bool = true) -> u8 {
         // TODO: decimal mode
         let a = .a as! u16;
         let b = operand as! u16;
@@ -655,8 +655,10 @@ class CPU {
         }
         let intermediate = a + b + c
         .carry = intermediate > 0xFF
-        let result = intermediate as! u8
-        .overflow = ((result ^ a) & (result ^ b) & 0x80) != 0
+        let result = (intermediate & 0xff) as! u8
+        if update_overflow == true {
+            .overflow = ((result ^ a) & (result ^ b) & 0x80) != 0
+        }
         .test_nz_flags(value: result)
         return result
     }
@@ -713,7 +715,7 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0
+                yield 0u8
             }
         }
 
@@ -772,7 +774,7 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0
+                yield 0u8
             }
         }
 
@@ -837,11 +839,11 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0
+                yield 0u8
             }
         }
         // Perform subtraction to set flags
-        .adder(operand: ~operand, carry: true)
+        .adder(operand: ~operand, carry: true, update_overflow: false)
     }
 
     function cpx(mut this, opcode: u8) {
@@ -1790,7 +1792,7 @@ class CPU {
         
         mut offset: u8 = 0
         mut negative_offset = false
-        if (operand < 0) {
+        if operand < 0 {
             offset = (operand * -1i8) as! u8
             negative_offset = true
         } else {
@@ -1800,7 +1802,7 @@ class CPU {
         let prev_page = .pc >> 8
         
         // TODO: please add a test for this
-        if (negative_offset) {
+        if negative_offset {
             .pc = .pc - (offset as! u16)
         } else {
             .pc = .pc + (offset as! u16)
