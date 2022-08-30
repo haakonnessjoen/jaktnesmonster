@@ -25,11 +25,13 @@ class System {
     }
 
     function mapper_read_byte(this, address: u16) -> u8 {
-        if (address >= 0x8000) {
-            //print("MAP read addr: {:4>04x}\n", address)
-            let page = (address - 0x8000) / 0x4000;
-            //print("Page: {:2>02x} offset: {:4>04x} = {:2>02x}\n", page, address % 0x4000, .cart.prg_rom_pages[page-1][address % 0x4000])
-            return .cart.prg_rom_pages[page-1][address % 0x4000];
+        if address >= 0x8000 {
+            // 16KB mirrored or 32KB PRG-ROM
+            let t_address = address - 0x8000
+            let page = t_address / 0x4000
+            let size = .cart.prg_rom_pages.size() as! u16
+
+            return .cart.prg_rom_pages[page % size][t_address % 0x4000]
         }
 
         return 0
