@@ -533,21 +533,22 @@ class CPU {
         .test_nz_flags(value: .a)
     }
 
-    function adder(mut this, operand: u8, carry: bool, update_overflow: bool = true) -> u8 {
+
+    function adder(mut this, accumulator: u8, operand: u8, carry: bool) -> u8 {
         // TODO: decimal mode
-        let a = .a as! u16;
+        let a = accumulator as! u16;
         let b = operand as! u16;
-        let c = match carry { 
-            true => 1u16
-            else => 0u16
-        }
+        let c = carry as! u16;
         let intermediate = a + b + c
         .carry = intermediate > 0xFF
-        let result = (intermediate & 0xff) as! u8
-        if update_overflow == true {
-            .overflow = ((result ^ a) & (result ^ b) & 0x80) != 0
-        }
+        let result: u8 = as_truncated(intermediate)
         .test_nz_flags(value: result)
+        return result
+    }
+
+    function adder_with_overflow(mut this, accumulator: u8, operand: u8, carry: bool) -> u8 {
+        let result = .adder(accumulator, operand, carry);
+        .overflow = ((result ^ accumulator) & (result ^ operand) & 0x80) != 0
         return result
     }
 
@@ -605,11 +606,10 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0u8
+                yield 0
             }
         }
-
-        .a = .adder(operand, carry: .carry)
+        .a = .adder_with_overflow(accumulator: .a, operand, carry: .carry)
     }
 
     function sbc(mut this, opcode: u8) {
@@ -666,17 +666,16 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0u8
+                yield 0
             }
         }
-
         // Perform subtraction with borrow
         // FIXME: !.carry is a syntax error
         let carry = match .carry {
             false => true,
             else => false
         }
-        .a = .adder(operand: ~operand, carry)
+        .a = .adder_with_overflow(accumulator: .a, operand: ~operand, carry)
     }
 
     function cmp(mut this, opcode: u8) {
@@ -733,11 +732,11 @@ class CPU {
             }
             else => {
                 eprintln("unknown opcode")
-                yield 0u8
+                yield 0
             }
         }
         // Perform subtraction to set flags
-        .adder(operand: ~operand, carry: true, update_overflow: false)
+        .adder(accumulator: .a, operand: ~operand, carry: true)
     }
 
     function cpx(mut this, opcode: u8) {
