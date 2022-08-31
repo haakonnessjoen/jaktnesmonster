@@ -669,13 +669,9 @@ class CPU {
                 yield 0
             }
         }
+
         // Perform subtraction with borrow
-        // FIXME: !.carry is a syntax error
-        let carry = match .carry {
-            false => true,
-            else => false
-        }
-        .a = .adder_with_overflow(accumulator: .a, operand: ~operand, carry)
+        .a = .adder_with_overflow(accumulator: .a, operand: ~operand, carry: .carry)
     }
 
     function cmp(mut this, opcode: u8) {
